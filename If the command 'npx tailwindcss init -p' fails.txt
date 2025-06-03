@@ -1,1 +1,0 @@
-If the command "npx tailwindcss init -p" fails then go to the "package.json" file and change the version of the "tailwindcss" to "^3.4.8".
