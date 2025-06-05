@@ -5,6 +5,8 @@ import axios from 'axios';
 function Weather() {
     const [locationData, setLocationData] = useState(null);
     const [weather, setWeather] = useState(null);
+    const [airQuality, setAirQuality] = useState(null);
+    const [forecast, setForecast] = useState(null);
     const openweathermapAPIKey = process.env.REACT_APP_OPENWEATHERMAP_API_KEY;
 
     useEffect(() => {
@@ -37,21 +39,125 @@ function Weather() {
                 }
             };
             fetchWeather();
+            const fetchAirQuality = async () => {
+                try {
+                    const response = await axios.get('https://api.openweathermap.org/data/2.5/air_pollution', {
+                        params: {
+                            lat: locationData.lat,
+                            lon: locationData.lon,
+                            appid: openweathermapAPIKey,
+                        },
+                    });
+                    setAirQuality(response.data);
+                } catch (error) {
+                    console.error('Error fetching air quality data:', error);
+                }
+            };
+            fetchAirQuality();
+            const fetchForecast = async () => {
+                try {
+                    const response = await axios.get('https://api.openweathermap.org/data/2.5/forecast', {
+                        params: {
+                            lat: locationData.lat,
+                            lon: locationData.lon,
+                            units: 'metric',
+                            appid: openweathermapAPIKey,
+                        },
+                    });
+                    setForecast(response.data);
+                } catch (error) {
+                    console.error('Error fetching forecast data:', error);
+                }
+            };
+            fetchForecast();
         }
     }, [locationData, openweathermapAPIKey]);console.log(weather);
 
+    function getVisibilityDescription(km) {
+        if (km >= 10) return 'Excellent';
+        if (km >= 5) return 'Good';
+        if (km >= 1) return 'Moderate';
+        return 'Poor';
+    }
+
+    function getWindDirection(deg) {
+        const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+        const index = Math.round(deg / 45) % 8;
+        return directions[index];
+    }
+
     return (
-        <div className="weather">
-            {locationData ? (
-                <div>
-                    <p>City: {locationData?.city}</p>
-                    <p>Country: {locationData?.country}</p>
-                    <p>Latitude: {locationData?.lat}</p>
-                    <p>Longitude: {locationData?.lon}</p>
-                </div>
-            ) : (
-                <p>Loading location...</p>
-            )}
+        <div className="page">
+            <div className="location">
+                <h1 className="text-4xl font-bold mb-4 text-gray-800">{locationData?.city}</h1>
+                <h2 className="text-2xl font-semibold mb-2 text-gray-700">{locationData?.country}</h2>
+            </div>
+            <div className="weather">
+                <p>
+                {
+                    new Date(weather?.dt * 1000)?.toLocaleString('en-GB', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: 'numeric',
+                        second: 'numeric',
+                        hour12: false
+                    })
+                }
+                </p>
+                <p>
+                    {weather?.weather?.[0]?.description ? weather?.weather?.[0]?.description?.charAt(0)?.toUpperCase() + weather?.weather?.[0]?.description?.slice(1) : 'No description available'}
+                </p>
+                <p>Temperature: {weather?.main?.temp} degrees Celsius</p>
+                <p>Feels like: {weather?.main?.feels_like} degrees Celsius</p>
+                <p>Max: {weather?.main?.temp_max} degrees Celsius</p>
+                <p>Min: {weather?.main?.temp_min} degrees Celsius</p>
+                <p>Cloud cover: {weather?.clouds?.all}%</p>
+                <p>Humidity: {weather?.main?.humidity}%</p>
+                <p>Pressure: {weather?.main?.pressure} hPa</p>
+                <p>Ground level: {weather?.main?.grnd_level} hPa</p>
+                <p>Sea level: {weather?.main?.sea_level} hPa</p>
+                <p>
+                    Sunrise:{" "}
+                    {
+                        new Date(weather?.sys?.sunrise * 1000)?.toLocaleTimeString('en-GB', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })
+                    }
+                </p>
+                <p>
+                    Sunset:{" "}
+                    {
+                        new Date(weather?.sys?.sunset * 1000)?.toLocaleTimeString('en-GB', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })
+                    }
+                </p>
+                <p>
+                    Visibility:{" "}
+                    {
+                       Math.round(weather?.visibility / 1000)
+                    }
+                    {" "}km{" "}({getVisibilityDescription(Math.round(weather?.visibility / 1000))})
+                </p>
+                <p>
+                    Wind:{" "}
+                    {
+                        (weather?.wind?.speed * 3.6)?.toFixed(1)
+                    }
+                    {" "}km/h
+                </p>
+                <p>
+                    Direction:{" "}
+                    {
+                        getWindDirection(weather?.wind?.deg)
+                    }
+                </p>
+            </div>
         </div>
     );
 }
