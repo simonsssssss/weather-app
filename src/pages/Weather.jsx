@@ -71,7 +71,7 @@ function Weather() {
             };
             fetchForecast();
         }
-    }, [locationData, openweathermapAPIKey]);console.log(weather);
+    }, [locationData, openweathermapAPIKey]);
 
     function getVisibilityDescription(km) {
         if (km >= 10) return 'Excellent';
@@ -84,6 +84,64 @@ function Weather() {
         const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
         const index = Math.round(deg / 45) % 8;
         return directions[index];
+    }
+
+    function getAQILevel(pollutant, value) {
+        const thresholds = {
+            co: [
+                { max: 4400, level: 'Good' },
+                { max: 9400, level: 'Fair' },
+                { max: 12400, level: 'Moderate' },
+                { max: 15400, level: 'Poor' },
+                { max: Infinity, level: 'Very Poor' },
+            ],
+            no2: [
+                { max: 40, level: 'Good' },
+                { max: 70, level: 'Fair' },
+                { max: 150, level: 'Moderate' },
+                { max: 200, level: 'Poor' },
+                { max: Infinity, level: 'Very Poor' },
+            ],
+            o3: [
+                { max: 60, level: 'Good' },
+                { max: 100, level: 'Fair' },
+                { max: 140, level: 'Moderate' },
+                { max: 180, level: 'Poor' },
+                { max: Infinity, level: 'Very Poor' },
+            ],
+            so2: [
+                { max: 20, level: 'Good' },
+                { max: 80, level: 'Fair' },
+                { max: 250, level: 'Moderate' },
+                { max: 350, level: 'Poor' },
+                { max: Infinity, level: 'Very Poor' },
+            ],
+            pm10: [
+                { max: 20, level: 'Good' },
+                { max: 50, level: 'Fair' },
+                { max: 100, level: 'Moderate' },
+                { max: 200, level: 'Poor' },
+                { max: Infinity, level: 'Very Poor' },
+            ],
+            pm2_5: [
+                { max: 10, level: 'Good' },
+                { max: 25, level: 'Fair' },
+                { max: 50, level: 'Moderate' },
+                { max: 75, level: 'Poor' },
+                { max: Infinity, level: 'Very Poor' },
+            ],
+        };
+
+        const pollutantThresholds = thresholds[pollutant.toLowerCase()];
+        if (!pollutantThresholds) return 'Unknown';
+
+        for (const threshold of pollutantThresholds) {
+            if (value <= threshold.max) {
+                return threshold.level;
+            }
+        }
+
+        return 'Unknown';
     }
 
     return (
@@ -156,6 +214,54 @@ function Weather() {
                     {
                         getWindDirection(weather?.wind?.deg)
                     }
+                </p>
+                <p>
+                    CO:{" "}
+                    {
+                        airQuality?.list?.[0]?.components?.co
+                    }{" "}μg/m³{" "}({getAQILevel('co', airQuality?.list?.[0]?.components?.co)})
+                </p>
+                <p>
+                    NH₃:{" "}
+                    {
+                        airQuality?.list?.[0]?.components?.nh3
+                    }{" "}μg/m³
+                </p>
+                <p>
+                    NO:{" "}
+                    {
+                        airQuality?.list?.[0]?.components?.no
+                    }{" "}μg/m³
+                </p>
+                <p>
+                    NO₂:{" "}
+                    {
+                        airQuality?.list?.[0]?.components?.no2
+                    }{" "}μg/m³{" "}({getAQILevel('no2', airQuality?.list?.[0]?.components?.no2)})
+                </p>
+                <p>
+                    O₃:{" "}
+                    {
+                        airQuality?.list?.[0]?.components?.o3
+                    }{" "}μg/m³{" "}({getAQILevel('o3', airQuality?.list?.[0]?.components?.o3)})
+                </p>
+                <p>
+                    PM2.5:{" "}
+                    {
+                        airQuality?.list?.[0]?.components?.pm2_5
+                    }{" "}μg/m³{" "}({getAQILevel('pm2_5', airQuality?.list?.[0]?.components?.pm2_5)})
+                </p>
+                <p>
+                    PM10:{" "}
+                    {
+                        airQuality?.list?.[0]?.components?.pm10
+                    }{" "}μg/m³{" "}({getAQILevel('pm10', airQuality?.list?.[0]?.components?.pm10)})
+                </p>
+                <p>
+                    SO₂:{" "}
+                    {
+                        airQuality?.list?.[0]?.components?.so2
+                    }{" "}μg/m³{" "}({getAQILevel('so2', airQuality?.list?.[0]?.components?.so2)})
                 </p>
             </div>
         </div>
